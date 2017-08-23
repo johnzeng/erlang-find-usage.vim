@@ -13,6 +13,34 @@ function! s:FindFun(word)
         let [module_name, fun_name] = split(a:word, ":")
     endif
     echom "module_name:".module_name.",fun_name:".fun_name
+
+    let lines = getline(0, '$')
+    let loclist = []
+    let j = 1
+    let search_reg = '\<'.fun_name.'\>'
+
+    for i in lines
+        if i =~ search_reg
+            let item = {'filename' : expand('%'), 'lnum' : j, 'text' : i}
+            call add(loclist, item)
+        endif
+        let j = j + 1
+    endfor
+
+    let ag_result = system('ag '.module_name.':'.fun_name)
+    echom 'ag result is :'
+    let ag_list  = split(ag_result, '\n')
+    for i in ag_list
+        let split_list = split(i, ':')
+        let item = {'filename' : split_list[0], 'lnum' : split_list[1], 'text' : join(split_list[2: -1], ":")}
+        call add(loclist, item)
+    endfor
+
+	call setloclist(0, loclist)
+	if len(loclist) > 0
+		exec "lopen"
+	endif
+
 endfunction
 
 function! s:FindVar(word)
