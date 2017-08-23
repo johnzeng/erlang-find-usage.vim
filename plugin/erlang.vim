@@ -1,6 +1,20 @@
 let s:erlang_local_func_beg = '^\s*[a-z][a-zA-Z0-9_]*(.*) ->'
 let s:erlang_local_func_end = '\.$'
 
+function! s:FindFun(word)
+    let match_res = match(a:word, ":")
+    if match_res == -1
+        let file_name = expand('#:t:h')
+        let module_name_list = split(file_name, '\.')
+        let module_name = module_name_list[0]
+        let fun_name = a:word
+    else
+        echom "ext fun"
+        let [module_name, fun_name] = split(a:word, ":")
+    endif
+    echom "module_name:".module_name.",fun_name:".fun_name
+endfunction
+
 function! s:FindVar(word)
     let end_line = search(s:erlang_local_func_end)
     let begin = search(s:erlang_local_func_beg, 'b')
@@ -32,7 +46,7 @@ endfunction
 function! s:FindUsageUnderCursor()
     let orig_isk = &isk
     set isk+=:
-    normal "_vawo
+    normal "_viwo
     let curr_line = getline('.')
     if curr_line[col('.') - 2] =~# '[#?]'
         normal h
@@ -40,7 +54,7 @@ function! s:FindUsageUnderCursor()
 
     let begin_index = col('.') - 1
     normal o\<Esc>
-    let end_index = col('.') - 1
+    let end_index = col('.') 
 
     let to_find_word = strpart(curr_line, begin_index, end_index - begin_index)
 
