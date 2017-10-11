@@ -25,7 +25,7 @@ function! s:FindFun(word)
         let module_file_result_list = split(module_file_result, '\n')
         let module_file = module_file_result_list[0]
 
-        let ag_cmd = "ag '\\b".fun_name."\\b' ".module_file
+        let ag_cmd = "ag '".fun_name."' ".module_file
         let module_ag_result = system(ag_cmd)
         let module_ag_result_list  = split(module_ag_result, '\n')
         for i in module_ag_result_list
@@ -33,7 +33,7 @@ function! s:FindFun(word)
         endfor
     endif
 
-    let ag_result = system('ag '.module_name.':'.fun_name)
+    let ag_result = system("ag '".module_name.":".fun_name."'")
     let ag_list  = split(ag_result, '\n')
     for i in ag_list
         call add(loclist, i)
@@ -80,6 +80,26 @@ function! s:FindVar(word)
 
 endfunction
 
+function! s:FindMacroOrRecord(word)
+    let loclist = []
+    if a:word[0] == '?'
+        let ag_cmd = "ag '\\".a:word."'"
+    else
+        let ag_cmd = "ag '".a:word."'"
+    endif
+    echom ag_cmd
+    let ag_result = system(ag_cmd)
+    let ag_list  = split(ag_result, '\n')
+    for i in ag_list
+        call add(loclist, i)
+    endfor
+
+    cgete loclist
+    if len(loclist) > 0
+        exec "copen"
+    endif
+endfunc
+
 function! s:FindUsageUnderCursor()
     let orig_isk = &isk
     set isk+=:
@@ -90,8 +110,8 @@ function! s:FindUsageUnderCursor()
     endif
 
     let begin_index = col('.') - 1
-    normal o\<Esc>
-    let end_index = col('.') 
+    normal o
+    let end_index = col('.')
 
     let to_find_word = strpart(curr_line, begin_index, end_index - begin_index)
 
@@ -101,12 +121,14 @@ function! s:FindUsageUnderCursor()
         let to_find = 1
     elseif(to_find_word[0] == '_')
         let to_find = 1
-    elseif(to_find_word[0] == '?')
-        let to_find = 0
+    elseif(to_find_word[0] == '?' || to_find_word[0] == '#')
+        let to_find = 2
     endif
 
     if(to_find == 1)
         return s:FindVar(to_find_word)
+    elseif(to_find == 2)
+        return s:FindMacroOrRecord(to_find_word)
     else
         return s:FindFun(to_find_word)
     endif
