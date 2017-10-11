@@ -1,11 +1,11 @@
 let s:erlang_local_func_beg = '^\s*[a-z][a-zA-Z0-9_]*(.*) ->'
-let s:erlang_local_func_end = '\.$'
 
 function! s:FindFun(word)
     let match_res = match(a:word, ":")
     let loclist = []
     if match_res == -1
-        let file_name = expand('#:t:h')
+        let full_file_name = expand("%")
+        let file_name = expand('%:t:h')
         let module_name_list = split(file_name, '\.')
         let module_name = module_name_list[0]
         let fun_name = a:word
@@ -15,12 +15,10 @@ function! s:FindFun(word)
 
         for i in lines
             if i =~ search_reg
-                let item = {'filename' : expand('%'), 'lnum' : j, 'text' : i}
-                call add(loclist, item)
+                call add(loclist, full_file_name.":".j.":".i)
             endif
             let j = j + 1
         endfor
-
     else
         let [module_name, fun_name] = split(a:word, ":")
         let module_file_result = system("find . -name ".module_name.".erl")
@@ -31,49 +29,53 @@ function! s:FindFun(word)
         let module_ag_result = system(ag_cmd)
         let module_ag_result_list  = split(module_ag_result, '\n')
         for i in module_ag_result_list
-            let split_list = split(i, ':')
-            let item = {'filename' : module_file, 'lnum' : split_list[0], 'text' : join(split_list[1: -1], ":")}
-            call add(loclist, item)
+            call add(loclist, i)
         endfor
     endif
 
     let ag_result = system('ag '.module_name.':'.fun_name)
     let ag_list  = split(ag_result, '\n')
     for i in ag_list
-        let split_list = split(i, ':')
-        let item = {'filename' : split_list[0], 'lnum' : split_list[1], 'text' : join(split_list[2: -1], ":")}
-        call add(loclist, item)
+        call add(loclist, i)
     endfor
 
-    call setloclist(0, loclist)
+    cgete loclist
     if len(loclist) > 0
-        exec "lopen"
+        exec "copen"
     endif
 
 endfunction
 
 function! s:FindVar(word)
-    let end_line = search(s:erlang_local_func_end)
+    let end_line = search(s:erlang_local_func_beg)
     let begin = search(s:erlang_local_func_beg, 'b')
+    if begin > 0
+        let begin = begin - 1
+    endif
+
+    if end_line > 0
+        let end_line = end_line - 2
+    else
+        let end_line = line("$")
+    endif
 
     let search_reg = '\<'.a:word.'\>'
     let j = begin
     let loclist = []
 
     let lines = getline(begin, end_line)
+    let current_file_name = expand('%')
 
     for i in lines
         if i =~ search_reg
-            let item = {'filename' : expand('%'), 'lnum' : j, 'text' : i}
-            call add(loclist, item)
-
+            call add(loclist, current_file_name.":".j.":".i)
         endif
         let j = j + 1
     endfor
 
-	call setloclist(0, loclist)
+	cgete loclist
 	if len(loclist) > 0
-		exec "lopen"
+		exec "copen"
 	endif
 
 endfunction
@@ -111,4 +113,3 @@ function! s:FindUsageUnderCursor()
 endfunction
 
 command! -nargs=0 FindErlangUsage :call <SID>FindUsageUnderCursor()
-au BufEnter *.erl,*.hrl :nmap <C-s>s :FindErlangUsage<CR>
