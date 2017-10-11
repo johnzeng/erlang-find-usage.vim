@@ -25,7 +25,7 @@ function! s:FindFun(word)
         let module_file_result_list = split(module_file_result, '\n')
         let module_file = module_file_result_list[0]
 
-        let ag_cmd = "ag '".fun_name."' ".module_file
+        let ag_cmd = "ag '\\b".fun_name."\\b' ".module_file
         let module_ag_result = system(ag_cmd)
         let module_ag_result_list  = split(module_ag_result, '\n')
         for i in module_ag_result_list
@@ -33,7 +33,7 @@ function! s:FindFun(word)
         endfor
     endif
 
-    let ag_result = system("ag '".module_name.":".fun_name."'")
+    let ag_result = system("ag '\\b".module_name.":".fun_name."\\b'")
     let ag_list  = split(ag_result, '\n')
     for i in ag_list
         call add(loclist, i)
@@ -83,9 +83,9 @@ endfunction
 function! s:FindMacroOrRecord(word)
     let loclist = []
     if a:word[0] == '?'
-        let ag_cmd = "ag '\\".a:word."'"
+        let ag_cmd = "ag '\\".a:word."\\b'"
     else
-        let ag_cmd = "ag '".a:word."'"
+        let ag_cmd = "ag '".a:word."\\b'"
     endif
     echom ag_cmd
     let ag_result = system(ag_cmd)
