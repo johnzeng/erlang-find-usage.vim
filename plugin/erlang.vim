@@ -125,6 +125,7 @@ function! s:FindUsageUnderCursor()
         let to_find = 2
     endif
 
+    let &isk = orig_isk
     if(to_find == 1)
         return s:FindVar(to_find_word)
     elseif(to_find == 2)
