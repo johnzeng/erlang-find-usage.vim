@@ -29,7 +29,7 @@ function! s:FindFun(word)
         let module_ag_result = system(ag_cmd)
         let module_ag_result_list  = split(module_ag_result, '\n')
         for i in module_ag_result_list
-            call add(loclist, i)
+            call add(loclist, module_file.":".i)
         endfor
     endif
 
@@ -87,7 +87,6 @@ function! s:FindMacroOrRecord(word)
     else
         let ag_cmd = "ag '".a:word."\\b'"
     endif
-    echom ag_cmd
     let ag_result = system(ag_cmd)
     let ag_list  = split(ag_result, '\n')
     for i in ag_list
